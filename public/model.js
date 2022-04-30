@@ -309,6 +309,16 @@ export const NODE_SCHEMA =
         description: 'pulse/square oscillator',
     },
 
+    'Quantize':{
+        ins: [
+            { name: 'in', default: 0 },
+        ],
+        outs: ['out'],
+        params: [],
+        state: ['scaleName', 'scaleRoot'],
+        description: 'quantize input to nearest value in quantization list',
+    },
+
     'Saw': {
         ins: [
             { name: 'freq', default: 0 }
@@ -920,6 +930,12 @@ export class CreateNode extends Action
             // Initialize an empty pattern
             node.patterns = [];
             initPattern(node, 0);
+        }
+
+        if (this.nodeType == 'Quantize'){
+            // Set the default scale
+            node.scaleName = 'minor pentatonic';
+            node.scaleRoot = 0;
         }
 
         // Add the node to the state
@@ -1569,6 +1585,25 @@ export class QueuePattern extends Action
     get undoable()
     {
         return false;
+    }
+}
+
+export class SetQuantizerScale extends Action {
+    constructor(nodeId, scaleRoot, scaleName)
+    {
+        super();
+        this.nodeId = nodeId;
+        this.scaleRoot = scaleRoot;
+        this.scaleName = scaleName;
+    }
+
+    update(model)
+    {
+        let node = model.state.nodes[this.nodeId];
+
+        // Update the scale parameters
+        node.scaleRoot = this.scaleRoot;
+        node.scaleName = this.scaleName;
     }
 }
 

@@ -476,6 +476,12 @@ export function compile(graph)
             continue;
         }
 
+        if (node.type == 'Quantize'){
+            audioNodes[nodeId] = node;
+            addDef(nodeId, `nodes[${nodeId}].update(${inVal(node, 0)})`);
+            continue;
+        }
+
         if (node.type == 'Saw')
         {
             audioNodes[nodeId] = node;

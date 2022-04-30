@@ -902,6 +902,41 @@ class GateSeq extends Sequencer
 }
 
 /**
+ * Quantize node
+ */
+class Quantize extends AudioNode {
+    constructor(id, state, sampleRate, send) {
+        super(id, state, sampleRate, send);
+
+        this.scaleRoot = state.scaleRoot;
+        this.scale = music.SCALE_CV_VALUES[state.scaleName]
+    }
+
+    frequencyToCV = (freq) => Math.log2(freq / 55.0);
+
+    CVToFrequency = (cv) => Math.pow(2, cv) * 55;
+
+    update(input) {
+        if (input < 0) { return 0 }
+
+        //convert the input to a cv value
+        const  cv = this.frequencyToCV(input);
+
+        //take the decimal part of the cv value
+        const octave = Math.floor(cv);
+        const decimal = cv - octave;
+
+        //find the closest note
+        const closestNote = this.scale.reduce((prev, curr) => {
+            return (Math.abs(curr - decimal) < Math.abs(prev - decimal)) ? curr : prev;
+        });
+
+        //convert back to a frequency
+        return this.CVToFrequency(octave + closestNote + this.scaleRoot / 12.0);
+    }
+}
+
+/**
  * Map of node types to classes
  */
 let NODE_CLASSES =
@@ -922,4 +957,5 @@ let NODE_CLASSES =
     MidiIn: MidiIn,
     MonoSeq: MonoSeq,
     GateSeq: GateSeq,
+    Quantize: Quantize,
 };

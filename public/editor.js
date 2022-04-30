@@ -2151,6 +2151,72 @@ class MonoSeq extends Sequencer
 }
 
 /**
+ * Quantize Notes to a scale
+ */
+ class QuantizeNode extends UINode {
+    constructor(id, state, editor) {
+        super(id, state, editor);
+
+        var div = document.createElement('div');
+        div.style['padding'] = '4px';
+        div.style['text-align'] = 'center';
+        this.centerDiv.append(div)
+
+        // Buttons and drop boxes
+        this.btnDiv = document.createElement('div');
+        this.btnDiv.style.display = 'flex';
+        this.btnDiv.style['justify-content'] = 'center';
+        this.btnDiv.style['flex-wrap'] = 'nowrap';
+        this.btnDiv.style['margin-bottom'] = 4;
+        div.appendChild(this.btnDiv);
+
+        var selectRoot = document.createElement("select");
+        var selectScale = document.createElement("select");
+        this.btnDiv.append(selectRoot, selectScale);
+
+        function scaleChange()
+        {
+            let scaleName = selectScale.options[selectScale.selectedIndex].value;
+
+            this.send(new model.SetQuantizerScale(
+                this.nodeId,
+                selectRoot.selectedIndex,
+                scaleName,
+            ));
+        }
+
+        selectRoot.onchange = scaleChange.bind(this);
+        selectScale.onchange = scaleChange.bind(this);
+        selectRoot.onpointerdown = evt => evt.stopPropagation();
+        selectScale.onpointerdown = evt => evt.stopPropagation();
+
+        // Populate the root note selection
+        var rootNote = music.Note('C1');
+        for (let i = 0; i < music.NOTES_PER_OCTAVE; ++i)
+        {
+            let noteName = rootNote.getName();
+            noteName = noteName.slice(0, -1);
+            var opt = document.createElement("option");
+            opt.setAttribute('value', noteName);
+            opt.appendChild(document.createTextNode(noteName));
+            opt.selected = (i == state.scaleRoot);
+            selectRoot.appendChild(opt);
+            rootNote = rootNote.offset(1);
+        }
+
+        // Populate the scale selection
+        for (let scale of music.SCALE_NAMES)
+        {
+            var opt = document.createElement("option");
+            opt.setAttribute('value', scale);
+            opt.appendChild(document.createTextNode(scale));
+            opt.selected = (scale == state.scaleName);
+            selectScale.appendChild(opt);
+        }
+    }
+}
+
+/**
  * Multi-gate step sequencer
  */
 class GateSeq extends Sequencer
@@ -2312,6 +2378,7 @@ const NODE_CLASSES =
     Knob: KnobNode,
     MidiIn: MidiIn,
     MonoSeq: MonoSeq,
+    Quantize: QuantizeNode,
     GateSeq: GateSeq,
     Notes: Notes,
     Scope: Scope,
